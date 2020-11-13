@@ -80,6 +80,15 @@ str(superdata)
 
 The data consists of columns that contain numeric, integer and character datatypes. 
 
+## Checking the number of unique values in each column
+
+```{r}
+lengths(lapply(superdata, unique))
+```
+
+There exists categorical datatypes in the data as shown by the number of unique values per column.
+
+
 # 7. Appropriateness of the available data to answer the given question
 
 The data contains columns such as: 
@@ -213,25 +222,123 @@ There are a few outliers present in the data. We will not remove them because of
 
 ### Measures of central tendency
 
+#### Mean
+
 ```{r}
+# get the mean of all numerical columns
 library(ggplot2)
 library(psych)
-describe(numeric_cols)
+
+colMeans(numeric_cols)
 ```
 
+#### Median
 
+```{r}
+# Get the median of all numerical columns
+apply (numeric_cols, 2 ,median)
+```
 
+#### Mode
 
+```{r}
+# Create the function.
+getmode <- function(v) {
+uniqv <- unique(v)
+uniqv[which.max(tabulate(match(v, uniqv)))]
+}
 
+lapply(superdata,FUN=getmode)
+```
 
+- Branch A is the most popular branch of the three branches. 
 
+- Most customers visiting the store are members and most of them are female.
 
+- The most popular product line is the Fashion accessories.
 
+- Most customers made payment through Ewallet
 
+- Most customers gave a rating or 6
 
+- The most popular time is 1948 hours
 
+### Measures of dispersion
 
+#### Find the minimum, maximum and quantiles of the columns in the data.
 
+```{r}
+summary(numeric_cols)
+```
+
+#### Range
+
+Range is the difference between the maximum point and the minimum point in a set of data. 
+
+```{r}
+# get the range for all numeric columns
+lapply(numeric_cols,FUN=range)
+```
+#### Interquartile Range
+The interquartile range also commonly known as IQR is the range between the 1st and 3rd
+quantiles. It is the difference between the two quantiles.
+
+```{r}
+# get the IQR for the numeric columns
+lapply(numeric_cols,FUN=IQR)
+```
+
+#### Standard Deviation
+Find the standard deviation of the numerical columns in the data
+```{r}
+apply (numeric_cols, 2 ,sd)
+```
+#### Variance
+Find the variance of the numerical columns
+```{r}
+sapply (numeric_cols, var)
+```
+
+#### Histograms
+```{r}
+par( mfrow= c ( 2 , 4 ))
+for(i in 1 : length(numeric_cols)) {
+hist(numeric_cols[,i], main= names(numeric_cols[i]))
+}
+```
+
+The columns: tax, cogs, gross income, total are skewed to the right. 
+
+```{r}
+str(superdata)
+```
+
+## 9.2 Bivariate and Multivariate analysis
+
+### Correlation between the different variables
+
+```{r}
+# Checking the correlation coefficients for numeric variables
+library(ggcorrplot)
+library(corrplot)
+
+correlations <- round(cor(numeric_cols[-5]), 2 )
+
+corrplot(correlations, method = "color", type = "full", tl.col = "black", tl.srt = 45, addCoef.col = "black")
+
+#ggcorrplot(corr, ggtheme = ggplot2::theme_gray, colors = c("#6D9EC1", "white", "#E46726"), lab = T)
+```
+
+There is a high correlation between the numeric variables except the quantity column. This is quite expected as they relate to a specific purchase made by a customer i.e. the cost of goods sold will be dependent on tax, gross income is a function of cost of goods sold and net tax, total income is a function of net pay given by gross income minus tax charged. These relationships and co-dependence result in high correlations between the variables
+
+### Scatter Plot
+```{r}
+plot(superdata$gross_income, superdata$total, xlab="Gross Income", ylab="Total Income")
+```
+
+As expected, the scatter plot distribution between these two values follows a straight line. This shows a linear relationship as shown above from the correlation plot. 
+
+Since all numerical columns are highly related, it is expected that they will take the same shape of distribution when plotted. 
 
 
 
