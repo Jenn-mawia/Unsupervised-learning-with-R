@@ -3,11 +3,363 @@ title: "Week 14 IP"
 author: "Jenipher Mawia"
 date: "11/13/2020"
 output:
-  word_document: default
   html_document: default
+  word_document: default
 ---
 
-```{r}
+# 1. Problem Definition
 
+## 1.1 Defining the question
+- Perform dimensionality reduction on the data provided 
+- Also perform feature selection on the same data
+
+## 1.2 Specifying the question
+Implement the solutions using unsupervised learning techniques for :
+
+- dimensionality reduction: reduce your dataset to a low dimensional dataset using the t-SNE algorithm or PCA 
+
+- and feature selection
+
+# 2. Defining the metrics for success
+This project will be considered a success if the following are achieved:
+- Unsupervised learning techniques are used for dimensionality reduction and feature selection without any errors.
+
+# 3. The Context
+You are a Data analyst at Carrefour Kenya and are currently undertaking a project that will inform the marketing department on the most relevant marketing strategies that will result in the highest no. of sales (total price including tax). Your project has been divided into two parts where you'll explore a recent marketing dataset by performing various unsupervised learning techniques and later providing recommendations based on your insights.
+
+# 4. Experimental Design taken
+The project consists of two parts. The following is the order in which I went about to achieve the objectives of this project: 
+
+- Data Sourcing and Understanding
+- Checking the data (head and tail, shape(number of records), datatypes)
+- Data cleaning procedures (handling null values,outliers, anomalies)
+- Exploratory data analysis (Univariate, Bivariate and Multivariate analyses)
+- Implementing the solution(Clustering)
+- Conclusion and recommendation
+
+
+# 5. Data Sourcing
+The data used for this project was provided by Moringa School and can be downloaded [here](http://bit.ly/CarreFourDataset)
+
+### Reading the data
+
+```{r}
+superdata <- read.csv("http://bit.ly/CarreFourDataset")
 ```
-This is my IP week 14gvjkv
+
+# 6. Checking the Data
+### checking the top of the data
+
+```{r}
+# checking the first 6 rows in the data
+head(superdata)
+```
+
+### checking the bottom of the data
+
+```{r}
+# checking the last 6 rows in the data
+tail(superdata)
+```
+
+### checking the shape of the data
+
+```{r}
+# checking the dimensions of the data (number of entries and fields)
+dim(superdata)
+```
+
+The data has 1000 entries and 16 columns. 
+
+### checking the datatypes of the column
+
+```{r}
+# getting the datatypes of each column
+str(superdata)
+```
+
+The data consists of columns that contain numeric, integer and character datatypes. 
+
+# 7. Appropriateness of the available data to answer the given question
+
+The data contains columns such as: 
+
+- Invoice id which has the invoice number of a given transaction made by a customer. It should be unique for each customer.
+
+- Branch: This suggests that there are more than one branches of the same store from which customers in different regions can shop from. 
+
+- Customer type: the type of customer either a member or normal customer.
+
+- Gender: sex of the customer
+
+- Product line: defining the category from which a customer purchased a product from
+
+- Unit price: definng the price of the product per unit
+
+- Quantity: number of products bought
+
+- Tax: amount of tax charged
+
+- Date of transaction
+
+- Time of the day the purchase was made
+
+- Payment: type of payment method used: by cash, credit card, ewallet etc. 
+
+- Cogs: Cost of goods sold
+
+-  Gross Margin Percentage: percentage change in the gross margin when the purchase is made
+
+- Gross Income: gross income generated from the purchase
+
+- Rating: rating of the transaction in form of numeric values, low values could indicate a poor rating while high values suggest good rating
+
+- Total: total amount generated from the purchase
+
+
+All these fields are useful in informing the marketing department on the most relevant marketing strategies that will result in the highest number of sales
+
+Therefore, it can be concluded that the data available is appropriate and relevant to answer the given question.
+
+# 8. Data Cleaning
+
+## 8.1 Standardizing column names
+
+Column names should be in the same format to ensure consistency
+
+```{r}
+# change column names to all lowercase
+colnames(superdata) = tolower(colnames(superdata))
+
+# check changes made
+colnames(superdata)
+
+# change two and three letter columns to a standard format
+names(superdata)[names(superdata) == "invoice.id"] <- "invoice_id"
+names(superdata)[names(superdata) == "customer.type"] <- "customer_type"
+names(superdata)[names(superdata) == "product.line"] <- "product_line"
+names(superdata)[names(superdata) == "unit.price"] <- "unit_price"
+names(superdata)[names(superdata) == "gross.margin.percentage"] <- "gross_margin_percentage"
+names(superdata)[names(superdata) == "gross.income"] <- "gross_income"
+
+#check changes made
+colnames(superdata)
+```
+
+## 8.2 Datatype conversion
+
+Some columns such as rating, customer type, branch, gender, payment and product line are categorical fields but are in numeric or character data types. These need to be converted to factors. 
+
+```{r}
+# convert the datatypes to factors
+superdata$rating <-as.factor(superdata$rating)
+superdata$customer_type <-as.factor(superdata$customer_type)
+superdata$branch <-as.factor(superdata$branch)
+superdata$product_line <-as.factor(superdata$product_line)
+superdata$gender <-as.factor(superdata$gender)
+superdata$payment <-as.factor(superdata$payment)
+
+# check the datatypes once more to see changes made
+str(superdata)
+```
+
+## 8.3 Duplicated Entries
+
+```{r}
+#Checking for duplicated rows
+duplicates <- superdata[duplicated(superdata),]
+dim(duplicates)
+```
+
+There are no duplicated entries in the data.
+
+## 8.4 Missing Values
+
+```{r}
+# check for missing values in each column in the data
+colSums(is.na(superdata))
+```
+
+There are no missing values in the data
+
+## 8.5 Outliers
+
+```{r}
+# get numerical columns from the data
+nums <- unlist(lapply(superdata, is.numeric))
+
+# output the numeric columns in form of a dataframe and check the top of the  resulting dataframe
+numeric_cols <- superdata[ , nums]
+head(numeric_cols)
+```
+
+There are 7 numeric columns from the total 16. 
+
+```{r}
+#boxplot(numeric_cols)
+
+# make a plot of multiple boxplots to check for outliers
+par ( mfrow= c (  2, 4 ))
+for (i in 1 : length (numeric_cols)) {
+boxplot (numeric_cols[,i], main= names (numeric_cols[i]), type= "l" )
+}
+```
+
+There are a few outliers present in the data. We will not remove them because of the dynamics that usually occur in purchases where some customers can be extremely extravagant and others extremely conservative hence causing outliers in the data. Removing them will make the resulting data not be a picture of the actual data. 
+
+# 9. Exploratory Data Analysis
+
+## 9.1 Univariate Data Analysis
+
+### Measures of central tendency
+
+```{r}
+library(ggplot2)
+library(psych)
+describe(numeric_cols)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
