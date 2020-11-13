@@ -1,0 +1,316 @@
+---
+title: "Association Rules"
+author: "Jenipher Mawia"
+date: "11/13/2020"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r}
+# load libraries
+library(arules)
+```
+
+# Reading the data
+
+```{r}
+# since we want the data as class transactions, we will read the data using read.transactions function
+association <- read.transactions("http://bit.ly/SupermarketDatasetII")
+
+```
+
+# Checking the data
+
+```{r}
+association
+```
+
+There are 7501 transactions and 5729 items in the data
+
+# Verifying the object's class
+
+```{r}
+# checking the class of our transactions data
+class(association)
+
+```
+
+This shows us transactions as the type of data that we will need
+
+# Data Exploration
+
+```{r}
+# Previewing the first 5 transactions
+inspect(association[1:5])
+```
+
+
+```{r}
+# preview the items that make up our dataset,
+items<-as.data.frame(itemLabels(association))
+colnames(items) <- "Item"
+head(items,15)
+
+```
+
+
+```{r}
+# Generating a summary of the transaction dataset
+# ---
+# This would give us some information such as the most purchased items, 
+# distribution of the item sets (no. of items purchased in each transaction), etc.
+# ---
+# 
+summary(association)
+```
+
+
+```{r}
+# Exploring the frequency of some articles 
+# i.e. transacations ranging from 12 to 16 and performing 
+# some operation in percentage terms of the total transactions 
+# 
+itemFrequency(association[, 12:16],type = "absolute")
+round(itemFrequency(association[, 12:16],type = "relative")*100,2)
+```
+
+
+```{r}
+# Producing a chart of frequencies and fitering 
+# to consider only items with a minimum percentage 
+# of support/ considering a top x of items
+# ---
+# Displaying top 10 most common items in the transactions dataset 
+# and the items whose relative importance is at least 10%
+# 
+par(mfrow = c(1, 2))
+
+# plot the frequency of items
+itemFrequencyPlot(association, topN = 10,col="darkgreen")
+itemFrequencyPlot(association, support = 0.03,col="darkred")
+```
+
+```{r}
+# Create an item frequency plot for the top 20 items
+if (!require("RColorBrewer")) {
+  # install color package of R
+install.packages("RColorBrewer")
+#include library RColorBrewer
+library(RColorBrewer)
+}
+itemFrequencyPlot(association,topN=20,type="absolute",col=brewer.pal(8,'Pastel2'), main="Absolute Item Frequency Plot")
+```
+
+```{r}
+itemFrequencyPlot(association,topN=20,type="relative",col=brewer.pal(8,'Pastel2'),main="Relative Item Frequency Plot")
+
+```
+
+
+
+```{r}
+# Building a model based on association rules 
+# using the apriori function 
+# ---
+# We use Min Support as 0.001 and confidence as 0.8
+# ---
+# 
+rules <- apriori (association, parameter = list(supp = 0.001, conf = 0.8))
+rules
+
+```
+
+Since there are 49122 rules, let's print only top 10:
+
+```{r}
+summary(rules)
+```
+
+
+```{r}
+inspect(rules[1:10])
+```
+
+# Limiting the number and size of rules 
+
+```{r}
+# We use measures of significance and interest on the rules, 
+# determining which ones are interesting and which to discard.
+# ---
+# However since we built the model using 0.001 Min support 
+# and confidence as 0.8 we obtained 410 rules.
+# However, in order to illustrate the sensitivity of the model to these two parameters, 
+# we will see what happens if we increase the support or lower the confidence level
+# 
+
+# Building a apriori model with Min Support as 0.002 and confidence as 0.8.
+rules2 <- apriori (association,parameter = list(supp = 0.002, conf = 0.8)) 
+
+# Building apriori model with Min Support as 0.002 and confidence as 0.6.
+rules3 <- apriori (association, parameter = list(supp = 0.001, conf = 0.6)) 
+
+rules2
+
+rules3
+
+```
+
+# Removing redundant rules
+
+
+```{r}
+subset.rules <- which(colSums(is.subset(rules, rules)) > 1) # get subset rules in vector
+length(subset.rules)  #> 3913
+```
+
+```{r}
+
+subset.association.rules. <- rules[-subset.rules] # remove subset rules
+subset.association.rules.
+```
+
+# Finding Rules related to given items
+
+```{r}
+# If we're interested in making a promotion relating to the sale of yogurt, 
+# we could create a subset of rules concerning these products 
+# ---
+# This would tell us the items that the customers bought before purchasing yogurt
+# ---
+# 
+yogurt_rules <- apriori(association, parameter = list(supp=0.01, conf=0.8), appearance = list(default="lhs", rhs="yogurt"))
+
+inspect(head(yogurt_rules))
+
+# Then order by confidence
+#yogurt<-sort(yogurt, by="confidence", decreasing=TRUE)
+#inspect(yogurt[1:5])
+```
+
+```{r}
+
+yogurt_rules_lhs <- apriori(association, parameter = list(supp=0.01, conf=0.8), appearance = list(default="rhs", lhs="yogurt"))
+inspect(head(yogurt_rules_lhs))
+
+```
+
+```{r}
+
+# build rules for the most frequent/popular items
+```
+
+
+# Visualizing Association Rules
+
+```{r}
+library(arulesViz)
+# Filter rules with confidence greater than 0.4 or 40%
+subRules<-rules[quality(rules)$confidence>0.4]
+#Plot SubRules
+plot(subRules)
+```
+
+
+```{r}
+plot(subRules,method="two-key plot")
+
+```
+
+
+
+```{r}
+# plotly_arules(subRules)
+
+
+
+```
+
+
+```{r}
+#top10subRules <- head(subRules, n = 10, by = "confidence")
+
+#plot(top10subRules, method = "graph",  engine = "htmlwidget")
+
+```
+
+# Individual Rule Representation
+
+
+```{r}
+# Filter top 20 rules with highest lift
+subRules2<-head(subRules, n=20, by="lift")
+plot(subRules2, method="paracoord")
+
+```
+
+ Finish up in the morning 4am
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
