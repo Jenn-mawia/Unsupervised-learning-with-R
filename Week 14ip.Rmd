@@ -299,6 +299,8 @@ Find the variance of the numerical columns
 sapply (numeric_cols, var)
 ```
 
+The variables appear to be measured in different units hence contributing to the fact that some variables have larger variances than others. 
+
 #### Histograms
 ```{r}
 par( mfrow= c ( 2 , 4 ))
@@ -341,16 +343,146 @@ As expected, the scatter plot distribution between these two values follows a st
 Since all numerical columns are highly related, it is expected that they will take the same shape of distribution when plotted. 
 
 
+# 10. Implementing the Solution
+
+## 10.1 Data Pre-processing
+ 
+Before we begin modelling, we must ensure that the datatypes in the data we will use are in the appropriate mode i.e. numeric. 
+
+```{r}
+# save data to a new dataframe to avoid messing up with original data
+data <- superdata
+
+# change datatypes
+data$branch <- as.numeric(data$branch)
+data$customer_type <- as.numeric(data$customer_type)
+data$gender <- as.numeric(data$gender)
+data$product_line <- as.numeric(data$product_line)
+data$payment <- as.numeric(data$payment)
+data$rating <- as.numeric(data$rating)
+
+#check the datatypes
+str(data)
+```
+
+Since we will be implementing unsupervised learning algorithms, it is also important to remove the target variable "Total". We will also exclude columns that are not numerical. 
+
+```{r}
+# remove the target and character variables
+df <- data[c(-16, -1,-9, -10, -13)]
+str(df)
+```
+
+## 10.2 Dimensionality Reduction
+
+Dimensionality reduction is the transformation of data from a high-dimensional space into a low-dimensional space so that the low-dimensional representation retains some meaningful properties of the original data.
+
+There are various ways of dimensionality reduction. We will apply PCA for this project. 
+
+PCA uses linear combinations of the variables, known as principal components. The new projected variables (principal components) are uncorrelated with each other and are ordered so that the first few components retain most of the variation present in the original variables. Thus, PCA is useful in situations where the independent variables are correlated with each other. We have observed this aspect of multicolinearity from the correlation matrix above.  
+
+```{r}
+# apply pca on the data
+df_pca <- prcomp(df, center = TRUE, scale. = TRUE)
+
+# preview the summary of the pca object
+summary(df_pca)
+```
+
+As a result, we obtain 11 principal components. 
+
+The first principal component explains a huge percentage of the variance at 35.77%. PC2 explains 10%, PC3 and PC4 explain 9% of the variance and PC5 and PC6 explain 8% of the variance. 
+
+We can conclude that the first 5 components explain 73.95% of the variance, hence we can reduce the dimensions of the original data to 5 components
+
+```{r}
+# Calling str() to have a look at the PCA object
+str(df_pca)
+```
+
+Here we note on the pca object: 
+
+- The center point ($center), 
+
+- scaling ($scale),
+
+- standard deviation(sdev) of each principal component,
+
+- the relationship (correlation or anticorrelation, etc) between the initial variables and the principal components ($rotation), and
+
+-the values of each sample in terms of the principal components ($x)
+
+
+#### Plotting the PCA object
+
+```{r}
+# plotting the first 2 principal components
+library(devtools)
+library(ggbiplot)
+ggbiplot(df_pca)
+```
+
+From the graph we can see that the variables quantity, unit price, gross income and tax contibute to PC1 with higher values in those variables moving the samples to the right on the plot, while variables such as product line and payment contribute to PC2.
+
+The first 2 principal components explain 46% of the variance, which is almost half of the total variance.
+
+```{r}
+#plotting the third and fourth components
+ggbiplot(df_pca,ellipse=TRUE,choices=c(3,4))
+
+```
+
+PC3 and PC4 explain very small percentages of the total variation hence it is difficult to derive insights from the plot.  
 
 
 
+```{r}
 
+str(superdata)
+```
 
+Adding more detail to the plot of PC1 and PC2
 
+```{r}
+library(ggfortify)
+pca.plot <- autoplot(df_pca, data = superdata, colour="gender")
+pca.plot
+```
 
+More females appear to be concentrated below in the graph than males who appear to be above in the graph implying that gender contibutes to PC2.
 
+### PCA dimension reduction with 5 components
 
+Since we concluded earlier that 5 components explain a higher percentage of variance, we will go ahead and create a pca component of only 5 components
 
+```{r}
+library(FactoMineR)
+
+# apply PCA
+df_PCA = PCA(df, scale.unit = TRUE, ncp = 5, graph = TRUE)
+```
+
+From the graph of components, we can still observe the same variables we listed above to be contributing to PC1 and PC2
+
+#### Interpreting Principal Components
+
+```{r}
+#check the correlation of the features to the principal components
+df_PCA$var$coord
+```
+
+From the outputs, we can observe that: 
+
+- unit price, quantity, tax, cogs and gross income are highly correlated with PC1.
+This correlation suggests the five variables vary together and when one goes down, the others decrease as well
+
+- branch, gender, payment are highly correlated with PC2
+
+- customer type, product line are highly correlated with PC3
+
+- rating is highly correlated with PC5
+
+## 10.3 Feature Selection 
 
 
 
