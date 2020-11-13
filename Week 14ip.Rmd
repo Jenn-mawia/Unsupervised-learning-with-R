@@ -1,0 +1,13 @@
+---
+title: "Week 14 IP"
+author: "Jenipher Mawia"
+date: "11/13/2020"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r}
+
+```
+This is my IP week 14gvjkv
