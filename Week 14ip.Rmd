@@ -484,121 +484,78 @@ This correlation suggests the five variables vary together and when one goes dow
 
 ## 10.3 Feature Selection 
 
+This is a process that reduces the number of features in a dataset by excluding or including them without any change as opposed to dimensionality reduction methods which do so by creating new combinations of features. 
 
+For this project we will implement the **feature ranking** method of feature selection. 
 
 
+```{r}
+# load libraries
+suppressWarnings(
+        suppressMessages(if
+                         (!require(FSelector, quietly=TRUE))
+                install.packages("FSelector")))
+                
+library(rJava)
+library(FSelector)
+```
 
 
+```{r}
+# remove character datatypes from the data
+feature_data <- data[c(-1, -9,-10)]
+str(feature_data)
+```
 
+#### Feature ranking using correlations
 
+From the FSelector package, we use the correlation coefficient as a unit of valuation to rank the variables by attribute importance. 
 
+```{r}
+Scores <- linear.correlation(total~., feature_data)
+Scores
 
+```
 
+From the output above, we observe a list containing rows of variables and their corresponding  scores on the right. We can observe that gross margin percentage score has not been included as  its importance is very minimal. We saw earlier its variance was very low and hence it contributes a minimum percentage of information to the data. 
+ 
+We need to define a cutoff to select the top most representative variables.
 
+```{r}
+# select the top 5 most representative features and output as a dataframe
+Subset <- cutoff.k(Scores, 5)
+as.data.frame(Subset)
+```
 
+The columns: tax, cogs, gross income, quantity, unit price have been selected with a cutoff of 5. We can observe that these variables have higher correlations and hence higher importance. 
 
 
+Setting cutoff as a percentage would indicate that we would want to work with percentage of the best variables: 
 
+```{r}
+Subset2 <-cutoff.k.percent(Scores, 0.4)
+as.data.frame(Subset2)
+```
 
+The same variables selected above have also been selected in the second subset. 
 
+#### Feature ranking using information gain
 
+Instead of using the scores for the correlation coefficient, we can use an entropy - based approach. Does this change the variables selected? 
 
+```{r}
+Scores2 <- information.gain(total~., feature_data)
+Scores2
+```
 
+Looking at the attribute importances, we can observe that categorical feature importances have been shrinked to 0.  
 
+```{r}
+Subset3 <- cutoff.k(Scores2, 5)
+as.data.frame(Subset3)
+```
 
+The selected features are still similar to the ones selected using correlations. This features can then be used to build an unsupervised learning model. 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Comparing to the correlation method, the entropy based approach is more strict.
 
