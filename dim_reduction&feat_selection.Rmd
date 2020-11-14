@@ -34,7 +34,9 @@ The project consists of two parts. The following is the order in which I went ab
 - Checking the data (head and tail, shape(number of records), datatypes)
 - Data cleaning procedures (handling null values,outliers, anomalies)
 - Exploratory data analysis (Univariate, Bivariate and Multivariate analyses)
-- Implementing the solution(Clustering)
+- Implementing the solution
+  - dimension reduction
+  - Feature selection
 - Conclusion and recommendation
 
 
