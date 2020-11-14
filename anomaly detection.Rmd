@@ -2,9 +2,10 @@
 title: "Anomaly Detection"
 author: "Jenipher Mawia"
 date: "11/13/2020"
-output: html_document
+output:
+  word_document: default
+  html_document: default
 ---
-identify unexpected data points in unlabeled datasets
 
 # 1. Problem Definition
 
