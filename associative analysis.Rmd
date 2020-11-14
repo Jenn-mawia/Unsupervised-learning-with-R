@@ -82,7 +82,7 @@ itemFrequency(association[, 12:16],type = "absolute")
 ```{r}
 # Producing a chart of frequencies and fitering 
 
-par(mfrow = c(1, 2))
+par(mfrow = c(1, 1))
 
 # Create an item frequency plot for the top 10 most common items
 if (!require("RColorBrewer")) {
