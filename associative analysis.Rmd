@@ -7,20 +7,43 @@ output:
   html_document: default
 ---
 
+# 1. Problem Definition
+
+- create association rules that will allow you to identify relationships between different items bought by customers at Carrefour store.
+
+# 2. Defining the metrics for success
+This project will be considered a success if the following are achieved:
+
+- association rules are generated from the data without any errors
+
+# 3. The Context
+You are a Data analyst at Carrefour Kenya and are currently undertaking a project that will inform the marketing department on the most relevant marketing strategies that will result in the highest no. of sales (total price including tax). The main task here is to generate association rules between different items bought by customers from the store. 
+
+# 4. Experimental Design taken
+The project consists of two parts. The following is the order in which I went about to achieve the objectives of this project: 
+
+- Data Sourcing and Understanding
+- Checking the data 
+- Data Exploration
+- Implementing the solution(generating association rules)
+- Visualizing the rules
+
+# 5. Data Sourcing
+
+The data used was provided by Moringa School and can be downloaded [here](http://bit.ly/SupermarketDatasetII)
+
+## Reading the data 
+
 ```{r}
 # load libraries
 library(arules)
-```
 
-# Reading the data
-
-```{r}
 # since we want the data as class transactions, we will read the data using read.transactions function
 association <- read.transactions("http://bit.ly/SupermarketDatasetII")
 
 ```
 
-# Checking the data
+# 6. Checking the data
 
 ```{r}
 association
@@ -28,7 +51,7 @@ association
 
 There are 7501 transactions and 5729 items in the data
 
-# Verifying the object's class
+### Verifying the object's class
 
 ```{r}
 # checking the class of our transactions data
@@ -38,7 +61,7 @@ class(association)
 
 This shows us transactions as the type of data that we will need
 
-# Data Exploration
+# 7. Data Exploration
 
 ```{r}
 # Previewing the first 5 transactions
@@ -101,7 +124,7 @@ itemFrequencyPlot(association, support = 0.05,col="darkred", main="Relative Impo
 
 This plot shows that 'Tea' and 'Wheat' have the most sales. So to increase the sale of 'herb' the retailer can put it near 'Tea'.
 
-# Implementing the solution
+# 8. Implementing the solution
 ## Building an Apriori model to generate association rules
 
 ```{r}
@@ -189,7 +212,7 @@ subset.association.rules.
 
 We now have a set of 108 rules which we can make better sense of as they are not many.
 
-# Finding Rules related to given items
+# 9. Finding Rules related to given items
 
 ```{r}
 # If we're interested in making a promotion relating to the sale of yogurt, 
@@ -217,7 +240,7 @@ inspect(tea_rules[1:10])
 
 Most customers bought "Green" before buying "tea". 
 
-# Visualizing Association Rules
+# 10. Visualizing Association Rules
 
 ## Scatter plot
 
@@ -262,7 +285,7 @@ plot(top10subRules, method = "graph") #,engine = "htmlwidget")
 
 - For rule 5, customers who bought "fries, escalope, pasta, mushroom" also bought "cream" etc. 
 
-# Individual Rule Representation
+## Individual Rule Representation
 
 
 ```{r}
@@ -275,73 +298,4 @@ plot(subRules2, method="paracoord")
 The RHS is the Consequent or the item we propose the customer will buy; the positions are in the LHS where 2 is the most recent addition to our basket and 1 is the item we previously had.
 
 Look at the topmost arrow. It shows that when a customer has "cream" and "tea" in their shopping cart, they are more likely to buy "cheese and whole" 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
