@@ -38,7 +38,7 @@ The project consists of two parts. The following is the order in which I went ab
   - dimension reduction
   - Feature selection
 - Conclusion and recommendation
-
+ 
 
 # 5. Data Sourcing
 The data used for this project was provided by Moringa School and can be downloaded [here](http://bit.ly/CarreFourDataset)
