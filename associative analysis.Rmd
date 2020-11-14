@@ -6,7 +6,7 @@ output:
   word_document: default
   html_document: default
 ---
-
+ 
 # 1. Problem Definition
 
 - create association rules that will allow you to identify relationships between different items bought by customers at Carrefour store.
