@@ -133,4 +133,4 @@ sales_anomalies_data %>%
 ```
 
 From the plot we can see that anomalies were detected at sales greater than 1000
-
+         
