@@ -44,7 +44,7 @@ This shows us transactions as the type of data that we will need
 # Previewing the first 5 transactions
 inspect(association[1:5])
 ```
-
+The transactions vary from one item to a group of more than one item. 
 
 ```{r}
 # preview the items that make up our dataset,
@@ -57,118 +57,137 @@ head(items,15)
 
 ```{r}
 # Generating a summary of the transaction dataset
-# ---
+
 # This would give us some information such as the most purchased items, 
 # distribution of the item sets (no. of items purchased in each transaction), etc.
-# ---
-# 
+
 summary(association)
 ```
 
+The most frequent items are: tea, wheat, mineral, fat, yogurt
+
+Element (itemset/transaction) length distribution: This gives us how many transactions are there for 1-itemset, for 2-itemset and so on.
+
+For example, there are  1603 transactions for one item, 2007 transactions for 2 items, and there are 16 items in one transaction which is the longest/most items purchased in one transaction.
+ 
+### Item Frequency  
 
 ```{r}
-# Exploring the frequency of some articles 
-# i.e. transacations ranging from 12 to 16 and performing 
-# some operation in percentage terms of the total transactions 
-# 
+# Exploring the frequency of some articles i.e. transactions ranging from 12 to 16 
 itemFrequency(association[, 12:16],type = "absolute")
-round(itemFrequency(association[, 12:16],type = "relative")*100,2)
 ```
 
+#### Graphical Analysis of Item frequency
 
 ```{r}
 # Producing a chart of frequencies and fitering 
-# to consider only items with a minimum percentage 
-# of support/ considering a top x of items
-# ---
-# Displaying top 10 most common items in the transactions dataset 
-# and the items whose relative importance is at least 10%
-# 
+
 par(mfrow = c(1, 2))
 
-# plot the frequency of items
-itemFrequencyPlot(association, topN = 10,col="darkgreen")
-itemFrequencyPlot(association, support = 0.03,col="darkred")
-```
-
-```{r}
-# Create an item frequency plot for the top 20 items
+# Create an item frequency plot for the top 10 most common items
 if (!require("RColorBrewer")) {
   # install color package of R
 install.packages("RColorBrewer")
 #include library RColorBrewer
 library(RColorBrewer)
 }
-itemFrequencyPlot(association,topN=20,type="absolute",col=brewer.pal(8,'Pastel2'), main="Absolute Item Frequency Plot")
+
+itemFrequencyPlot(association,topN=11,type="absolute",col=brewer.pal(8,'Pastel2'), main="Absolute Item Frequency Plot")
+
+# and the items whose relative importance is at least 5%
+
+itemFrequencyPlot(association, support = 0.05,col="darkred", main="Relative Importance >= 5%")
 ```
 
-```{r}
-itemFrequencyPlot(association,topN=20,type="relative",col=brewer.pal(8,'Pastel2'),main="Relative Item Frequency Plot")
+This plot shows that 'Tea' and 'Wheat' have the most sales. So to increase the sale of 'herb' the retailer can put it near 'Tea'.
 
-```
-
-
+# Implementing the solution
+## Building an Apriori model to generate association rules
 
 ```{r}
-# Building a model based on association rules 
-# using the apriori function 
-# ---
+# Building a model based on association rules using the apriori function 
+
 # We use Min Support as 0.001 and confidence as 0.8
-# ---
-# 
+
 rules <- apriori (association, parameter = list(supp = 0.001, conf = 0.8))
+# checking the rules
 rules
 
 ```
 
-Since there are 49122 rules, let's print only top 10:
-
-```{r}
-summary(rules)
-```
+Since there are 271 rules, we print only top 10:
 
 
 ```{r}
 inspect(rules[1:10])
 ```
 
-# Limiting the number and size of rules 
+This would tell us the items that the customers bought before purchasing other items. For example: 
+
+- From the confidence levels, 100% of customers who bought "cookies and low" also bought "fat" or "yogurt"
+
+- 100% of customers who bought "burgers and whole" also bought "wheat"
 
 ```{r}
-# We use measures of significance and interest on the rules, 
-# determining which ones are interesting and which to discard.
-# ---
-# However since we built the model using 0.001 Min support 
-# and confidence as 0.8 we obtained 410 rules.
-# However, in order to illustrate the sensitivity of the model to these two parameters, 
-# we will see what happens if we increase the support or lower the confidence level
-# 
+# check summary of the rules
+summary(rules)
+```
+
+The summary shows: 
+
+- the total number of rules: 271 rules
+
+- Distribution of rule length: A length of 3 items has the most rules: 144 and length of 4 items have the lowest number of rules:20
+
+- Summary of Quality measures: Min and max values for Support, Confidence and, Lift.
+
+- Information used for creating rules: The data, support, and confidence we provided to the algorithm.
+
+# Limiting the number and size of rules 
+
+We use measures of significance and interest on the rules, determining which ones are interesting and which to discard.
+
+However since we built the model using 0.001 Min support and confidence as 0.8 we obtained 271 rules.To illustrate the sensitivity of the model to these two parameters, we will see what happens if we increase the support or lower the confidence level. 
+
+For stronger rules, you can increase the value of conf and for more extended rules give higher value to maxlen or adjust the supp parameter.
+
+```{r}
 
 # Building a apriori model with Min Support as 0.002 and confidence as 0.8.
 rules2 <- apriori (association,parameter = list(supp = 0.002, conf = 0.8)) 
-
-# Building apriori model with Min Support as 0.002 and confidence as 0.6.
-rules3 <- apriori (association, parameter = list(supp = 0.001, conf = 0.6)) 
-
+# checking the rules
 rules2
+```
 
+We get 99 rules with supp=0.02 and conf=0.8. This would lead us to understand that using a high level of support can make the model lose interesting rules.
+
+```{r}
+# Building apriori model with Min Support as 0.002 and confidence as 0.6.
+rules3 <- apriori (association, parameter = list(supp = 0.001, conf = 0.6))
 rules3
 
 ```
 
-# Removing redundant rules
+We get 319 rules with parameters: supp = 0.001, conf = 0.6. This would mean that using a low confidence level increases the number of rules to quite an extent and many will not be useful. 
 
+## Removing redundant rules
+
+Here, we reduce the number of rules by removing rules that are subsets of larger rules. 
 
 ```{r}
-subset.rules <- which(colSums(is.subset(rules, rules)) > 1) # get subset rules in vector
-length(subset.rules)  #> 3913
+# get subset rules in vector
+subset.rules <- which(colSums(is.subset(rules, rules)) > 1)
+# number of subset rules
+length(subset.rules)  
 ```
 
 ```{r}
-
-subset.association.rules. <- rules[-subset.rules] # remove subset rules
+# remove subset rules
+subset.association.rules. <- rules[-subset.rules] 
 subset.association.rules.
 ```
+
+We now have a set of 108 rules which we can make better sense of as they are not many.
 
 # Finding Rules related to given items
 
@@ -179,60 +198,69 @@ subset.association.rules.
 # This would tell us the items that the customers bought before purchasing yogurt
 # ---
 # 
-yogurt_rules <- apriori(association, parameter = list(supp=0.01, conf=0.8), appearance = list(default="lhs", rhs="yogurt"))
+yogurt_rules <- apriori(association, parameter = list(supp=0.001, conf=0.8), appearance = list(default="lhs", rhs="yogurt"))
 
-inspect(head(yogurt_rules))
-
-# Then order by confidence
-#yogurt<-sort(yogurt, by="confidence", decreasing=TRUE)
-#inspect(yogurt[1:5])
+# check the rules
+inspect(yogurt_rules[1:10])
 ```
+
+We can conclude that most customers bought "low" before buying "yogurt". The marketing team can put these two products next to each other. 
 
 ```{r}
+# Which items did the customers buy before purchasing tea
 
-yogurt_rules_lhs <- apriori(association, parameter = list(supp=0.01, conf=0.8), appearance = list(default="rhs", lhs="yogurt"))
-inspect(head(yogurt_rules_lhs))
+tea_rules <- apriori(association, parameter = list(supp=0.001, conf=0.8), appearance = list(default="lhs", rhs="tea"))
+#check the rukes
+inspect(tea_rules[1:10])
 
 ```
 
-```{r}
-
-# build rules for the most frequent/popular items
-```
-
+Most customers bought "Green" before buying "tea". 
 
 # Visualizing Association Rules
+
+## Scatter plot
 
 ```{r}
 library(arulesViz)
 # Filter rules with confidence greater than 0.4 or 40%
-subRules<-rules[quality(rules)$confidence>0.4]
+subRules<-rules[quality(rules)$support>0.001]
 #Plot SubRules
 plot(subRules)
 ```
 
+The above plot shows that rules with high lift have high confidence. 
+
+## Two Key Plot
 
 ```{r}
 plot(subRules,method="two-key plot")
 
 ```
 
+The two-key plot uses support and confidence on x and y-axis respectively. It uses order for coloring. The order is the number of items in the rule. Order 2 has higher values for the support compared to order 3 and 4. 
 
+## Interactive Scatter-Plot
 
 ```{r}
 # plotly_arules(subRules)
 
-
-
 ```
 
+## Graph based visualizations
 
 ```{r}
-#top10subRules <- head(subRules, n = 10, by = "confidence")
+top10subRules <- head(subRules, n = 10, by = "confidence")
 
-#plot(top10subRules, method = "graph",  engine = "htmlwidget")
+plot(top10subRules, method = "graph") #,engine = "htmlwidget")
 
 ```
+
+- We can see that for rule 1 and 2, customers who bought "cookies and low" also bought "yogurt" or "fat"
+
+- For rule 3, customers who bought "dark" also bought "extra" 
+
+- For rule 5, customers who bought "fries, escalope, pasta, mushroom" also bought "cream" etc. 
 
 # Individual Rule Representation
 
@@ -244,7 +272,10 @@ plot(subRules2, method="paracoord")
 
 ```
 
- Finish up in the morning 4am tommorrow
+The RHS is the Consequent or the item we propose the customer will buy; the positions are in the LHS where 2 is the most recent addition to our basket and 1 is the item we previously had.
+
+Look at the topmost arrow. It shows that when a customer has "cream" and "tea" in their shopping cart, they are more likely to buy "cheese and whole" 
+
 
 
 
