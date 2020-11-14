@@ -1,0 +1,136 @@
+---
+title: "Anomaly Detection"
+author: "Jenipher Mawia"
+date: "11/13/2020"
+output: html_document
+---
+identify unexpected data points in unlabeled datasets
+
+# 1. Problem Definition
+
+- Detect anomalies in the sales data.
+
+- Implement the solution using unsupervised learning techniques for anomaly detection
+
+# 2. Defining the metrics for success
+This project will be considered a success if anomalies that indicate fraud are detected. 
+
+
+# 3. The Context
+You are a Data analyst at Carrefour Kenya and are currently undertaking a project that will inform the marketing department on the most relevant marketing strategies that will result in the highest no. of sales (total price including tax). The main task here is to detect fraud in any of the sales made. 
+
+# 4. Experimental Design taken
+The following is the order in which I went about to achieve the objectives of this project: 
+
+- Data Sourcing and Understanding
+- Checking the data (head, shape(number of records), datatypes)
+- Data Type Conversion
+- Anomaly detection
+- Plotting anomalies
+
+# 5. Data Sourcing and Understanding. 
+The data was provided by Moringa School and can be downloaded [here](http://bit.ly/CarreFourSalesDataset)
+
+
+```{r}
+# load libraries
+library(tidyverse)
+library(tibbletime)
+library(anomalize)
+```
+
+## Reading the data 
+
+```{r}
+sales_data <- read.csv("http://bit.ly/CarreFourSalesDataset")
+```
+
+# 6. Checking the data
+
+checking the top of the data
+
+```{r}
+head(sales_data)
+```
+
+Checking the data types
+
+```{r}
+str(sales_data)
+```
+
+Checking the dimensions of the data
+
+```{r}
+dim(sales_data)
+```
+There are two columns and 1000 entries in the data of types character and numeric. 
+
+The date column shoudl be converted to its appropriate format. 
+
+# 7. Data Type Conversion
+
+### Change the data type of the "Date" column 
+```{r}
+# convert the datatype of the date column
+sales_data$Date <- anytime::anydate(sales_data$Date)
+str(sales_data)
+```
+
+Extract the year, month and day from the date column
+
+```{r}
+sales_data$year <- as.numeric(format(sales_data$Date, format="%Y"))
+sales_data$month <- as.numeric(format(sales_data$Date, format="%m"))
+sales_data$day <- as.numeric(format(sales_data$Date, format="%d"))
+#check the datatypes
+head(sales_data)
+
+```
+
+
+```{r}
+# change the class of the data to tibble to be able to use the anomalize function
+anomaly <- as_tibble(sales_data)
+head(anomaly)
+```
+
+# 8. Checking for anomalies
+
+```{r}
+# check for anomalies in the Sales column using the anomalize() function
+sales_anomalies <- anomalize(anomaly, Sales, method = "iqr", alpha = 0.1, max_anoms = 0.2, verbose = FALSE)
+
+head(sales_anomalies)
+```
+
+```{r}
+# check for unique values in the column "anomaly"
+unique(sales_anomalies$anomaly)
+```
+
+Some transactions have been detected as anomalies in the data. These could be signs of fraud.  
+
+### Converting the anomaly column to factor
+
+```{r}
+# convert the anomaly column to factor
+sales_anomalies_data<- sales_anomalies
+sales_anomalies_data$anomaly <- as.factor(sales_anomalies_data$anomaly)
+str(sales_anomalies_data)
+```
+
+# 9. Plotting the anomalies
+
+```{r}
+#plot(sales_anomalies_data$Sales, color = "anomaly")
+
+sales_anomalies_data %>% 
+  ggplot() +
+  aes(x = Sales, anomaly = ..count../nrow(sales_anomalies_data), fill = anomaly) +
+  geom_dotplot() +
+  ylab("relative frequency")
+```
+
+From the plot we can see that anomalies were detected at sales greater than 1000
+
